@@ -1,0 +1,57 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>WebRadar v0.001</title>
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"></script>
+    <link rel="stylesheet" href="index.css">
+  </head>
+  <body>
+    <div id="wrap">
+      <div id="headbuttons">
+        <input id="loadinput" type="file" accept=".sct.json">
+      </div>
+      <div id="showfile">Not select files</div>
+      <div id="wrap-viewboard">
+        <canvas id="viewboard" width="800" height="600">Your Browser Not Support Canvas.</canvas>
+      </div>
+    </div>
+    <script src="viewboard.js"></script>
+    <script>
+      $('#loadinput').change((event) => {
+        let file = event.target.files[0];
+        if (file) {
+          console.log('loading: ' + file.name);
+          let reader = new FileReader();
+          reader.onload = (event) => {
+            vm = JSON.parse(event.target.result);
+            console.log('file load success: ' + file.name);
+            vb.draw();
+          }
+          reader.readAsText(file, 'utf-8');
+        }
+      });
+      let draging = false;
+      let drag_x = 0, drag_y = 0;
+      $('#viewboard').mousedown((event) => {
+        draging = true;
+        drag_x = event.clientX;
+        drag_y = event.clientY;
+      }).mouseup((event) => {
+        draging = false;
+      }).mousemove((event) => {
+        if (draging) {
+          let shift_x = drag_x - event.clientX;
+          let shift_y = drag_y - event.clientY;
+          vb.topleft.x -= shift_x;
+          vb.topleft.y -= shift_y;
+          drag_x = event.clientX;
+          drag_y = event.clientY;
+          vb.draw();
+        }
+      }).on('wheel', (event) => {
+        vb.zoom += event.originalEvent.deltaY / 100;
+        vb.draw();
+      });
+    </script>
+  </body>
+</html>

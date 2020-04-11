@@ -1,0 +1,19 @@
+{
+  "name": "webradarview",
+  "version": "1.0.0",
+  "description": "ATC Radar Screen",
+  "main": "main.js",
+  "dependencies": {
+    "electron": "^8.2.1"
+  },
+  "devDependencies": {},
+  "scripts": {
+    "start": "electron ."
+  },
+  "keywords": [
+    "atc",
+    "radar"
+  ],
+  "author": "Kangzhi Shi",
+  "license": "ISC"
+}
