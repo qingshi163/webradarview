@@ -1,20 +1,14 @@
 html, body {
     padding: 0;
     margin: 0;
+    width: 100%;
     height: 100%;
     overflow: hidden;
+    display: block;
 }
 
-#wrap {
-    height: 100%;
-    width: 100%;
+#viewboard {
     position: absolute;
-    top: 0;
-    bottom: 0;
-    z-index: 0;
-}
-
-#wrap-viewboard {
-    width: 100%;
-    height: 100%;
+    top: 0px;
+    left: 0px;
 }
