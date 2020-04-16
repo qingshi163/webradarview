@@ -1,5 +1,5 @@
 const firstProjection = 'WGS84';
-const secondProjection = '+proj=utm +zone=1 +units=m';
+const secondProjection = '+proj=utm +zone=11 +units=m';
 var projector = proj4(firstProjection, secondProjection);
 
 function forward(p) {
