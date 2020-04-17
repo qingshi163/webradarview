@@ -5,21 +5,59 @@ class ViewBoard {
         this.canvas = canvas;
         this.updateViewport({x: 0.0, y: 0.0}, 1000.0, ratio);
     }
-    drawStation(ctx, station) {
-        if (station.projX == undefined || station.projY == undefined) {
-            [station.projX, station.projY] = forward([station.lat, station.lon]);
-        }
-        station.screenX = station.projX / this.zoom;
-        station.screenY = station.projY / this.zoom;
-        ctx.fillText(station.name, station.screenX, station.screenY);
+    translate(ctx, projX, projY) {
+        ctx.translate(projX / this.zoom, projY / this.zoom);
+    }
+    drawVor(ctx, s) {
+        ctx.save();
+        this.translate(ctx, s.projX, s.projY);
+        ctx.font = '12px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(s.name, 0, -10);
+        ctx.stroke(new Path2D('M-8 -8 h16 v16 h-16 Z M-4 -8 h8 l4 8 l-4 8 h-8 l-4 -8 Z'));
+        ctx.beginPath();
+        ctx.arc(0, 0, 2, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.restore();
+    }
+    drawNdb(ctx, s) {
+        ctx.save();
+        this.translate(ctx, s.projX, s.projY);
+        ctx.font = '12px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'bottom';
+        ctx.fillText(s.name, 0, -10);
+        ctx.beginPath();
+        ctx.arc(0, 0, 2, 0, 2 * Math.PI);
+        ctx.fill();
+        ctx.beginPath();
+        ctx.arc(0, 0, 4, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(0, 0, 6, 0, 2 * Math.PI);
+        ctx.stroke();
+        ctx.restore();
+    }
+    drawFixes(ctx, s) {
+        ctx.save();
+        this.translate(ctx, s.projX, s.projY);
+        ctx.font = '9px serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(s.name, 0, 0);
+        ctx.restore();
+    }
+    drawAirport(ctx, s) {
+        this.drawFixes(ctx, s);
     }
     drawMap(ctx) {
         ctx.save();
         ctx.translate(-this.centerX + this.width / 2, -this.centerY + this.height / 2);
-        // ctx.scale(this.zoom, this.zoom);
-        for (let [key,value] of Object.entries(vm.fixes)) {
-            this.drawStation(ctx, value);
-        }
+        Object.values(vm.vor).forEach(x => this.drawVor(ctx, x));
+        Object.values(vm.ndb).forEach(x => this.drawNdb(ctx, x));
+        Object.values(vm.fixes).forEach(x => this.drawFixes(ctx, x));
+        Object.values(vm.airport).forEach(x => this.drawAirport(ctx, x));
         ctx.restore();
     }
     draw() {

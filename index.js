@@ -61,17 +61,26 @@ function initCanvas() {
     canvas.addEventListener('wheel', (event) => {
         if (event.deltaY < 0) {
             // vb.zoomIn({'x': event.clientX, 'y': event.clientY});
+            vb.zoomIn();
         } else {
-            vb.zoomOut()
+            vb.zoomOut();
             // vb.zoomOut({'x': event.clientX, 'y': event.clientY});
         }
         vb.draw();
     });
 }
 
+function proj(s) {
+    [s.projX, s.projY] = forward([s.lat, s.lon]);
+}
+
 function setup_vm(_vm) {
     vm = _vm;
-    vm.fixes.CENTER00 = { name: 'CENTER00', lat: 0, lon: 0, projX: 0, projY: 0 };
+    Object.values(vm.vor).forEach(x => proj(x));
+    Object.values(vm.ndb).forEach(x => proj(x));
+    Object.values(vm.fixes).forEach(x => proj(x));
+    Object.values(vm.airport).forEach(x => proj(x));
+    vm.vor.CENTER00 = { name: 'CENTER00', freq: 0.0, lat: 0, lon: 0, projX: 0, projY: 0 };
     vb.draw();
 }
 
