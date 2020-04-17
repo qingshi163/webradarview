@@ -9,11 +9,11 @@ function init() {
     let load_panel = document.getElementById('load-panel');
     load_panel.style.display = 'block';
 
-    fetch('VATCA.sct.json').then((res) => {
-        return res.json();
-    }).then((data) => {
-        vm = data;
-    });
+    // fetch('VATCA.sct.json').then((res) => {
+    //     return res.json();
+    // }).then((data) => {
+    //     vm = data;
+    // });
 }
 
 function initCanvas() {
@@ -60,9 +60,10 @@ function initCanvas() {
     });
     canvas.addEventListener('wheel', (event) => {
         if (event.deltaY < 0) {
-            vb.zoomIn({'x': event.clientX, 'y': event.clientY});
+            // vb.zoomIn({'x': event.clientX, 'y': event.clientY});
         } else {
-            vb.zoomOut({'x': event.clientX, 'y': event.clientY});
+            vb.zoomOut()
+            // vb.zoomOut({'x': event.clientX, 'y': event.clientY});
         }
         vb.draw();
     });
@@ -70,17 +71,21 @@ function initCanvas() {
 
 function setup_vm(_vm) {
     vm = _vm;
+    vm.fixes.CENTER00 = { name: 'CENTER00', lat: 0, lon: 0, projX: 0, projY: 0 };
+    vb.draw();
 }
 
 function on_load_file(event) {
-    if (event.target.files) {
+    if (event.target.files.length != 0) {
         let file = event.target.files[0];
-        console.log('Load File: ' + file.name);
         let reader = new FileReader();
         reader.onload = (evt) => {
             console.log('File Load Success: ' + file.name);
-            setup_vm(JSON.parse(evt.target.result));
+            let parser = new SectorParser(evt.target.result);
+            setup_vm(parser.model);
         };
         reader.readAsText(file);
+    } else {
+        setup_vm(null);
     }
 }
