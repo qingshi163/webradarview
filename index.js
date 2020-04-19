@@ -71,7 +71,14 @@ function initCanvas() {
 }
 
 function proj(s) {
-    [s.projX, s.projY] = forward([s.lat, s.lon]);
+    [s.projX, s.projY] = forward([s.lon, s.lat]);
+    s.projY = -s.projY;
+}
+function proj2(s) {
+    [s.projX1, s.projY1] = forward([s.lon1, s.lat1]);
+    s.projY1 = -s.projY1;
+    [s.projX2, s.projY2] = forward([s.lon2, s.lat2]);
+    s.projY2 = -s.projY2;
 }
 
 function setup_vm(_vm) {
@@ -80,6 +87,17 @@ function setup_vm(_vm) {
     Object.values(vm.ndb).forEach(x => proj(x));
     Object.values(vm.fixes).forEach(x => proj(x));
     Object.values(vm.airport).forEach(x => proj(x));
+    Object.values(vm.runway).forEach(x => proj2(x));
+    Object.values(vm.sid).forEach(x => proj2(x));
+    Object.values(vm.star).forEach(x => proj2(x));
+    Object.values(vm.highAirway).forEach(x => proj2(x));
+    Object.values(vm.lowAirway).forEach(x => proj2(x));
+    Object.values(vm.artcc).forEach(x => proj2(x));
+    Object.values(vm.artccLow).forEach(x => proj2(x));
+    Object.values(vm.artccHigh).forEach(x => proj2(x));
+    Object.values(vm.geo).forEach(geo => geo.forEach(x => proj2(x)));
+    Object.values(vm.regions).forEach(region => region.forEach(x => proj(x)));
+    Object.values(vm.labels).forEach(x => proj(x));
     vm.vor.CENTER00 = { name: 'CENTER00', freq: 0.0, lat: 0, lon: 0, projX: 0, projY: 0 };
     vb.draw();
 }
