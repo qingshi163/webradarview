@@ -6,18 +6,38 @@
     <link rel="stylesheet" href="index.css">
   </head>
   <body>
-    <canvas id="viewboard">Your Browser Not Support Canvas.</canvas>
-    <div id="load-panel" class="panel">
-      <input id="load-file" type="file" accept=".sct"></button>
+    <canvas id="layer1">Your Browser Not Support Canvas.</canvas>
+    <canvas id="layer2"></canvas>
+    <div id="top-panel" class="panel">
+      <input id="load-file" type="file" accept=".sct">
+      <button>View</button>
     </div>
-    <svg id="vor-svg" width="16" height="16">
-      <path fill="none" stroke="black" stroke-width="1"></path>
-      <rect x="-8" y="-8" width="16" height="16" style="fill:none;stroke:black;stroke-width:2" />
-    </svg>
+<script id="line-frag-source" type="glsl">
+  precision mediump float;
+  uniform vec4 u_color;
+  void main() {
+    gl_FragColor = u_color;
+  }
+</script>
+<script id="line-vert-source" type="glsl">
+  attribute vec2 a_position;
+  uniform vec2 u_resolution;
+  uniform vec2 u_translation;
+  uniform float u_scale;
+  void main() {
+    vec2 scale = a_position / u_scale;
+    vec2 translate = scale + u_translation;
+    vec2 zeroToOne = translate / u_resolution;
+    vec2 zeroToTwo = zeroToOne * 2.0;
+    vec2 clipSpace = zeroToTwo - 1.0;
+    gl_Position = vec4(clipSpace * vec2(1, -1), 0, 1);
+  }
+</script>
     <script src="node_modules/proj4/dist/proj4.js"></script>
     <script src="proj4.js"></script>
     <script src="sectorparser.js"></script>
-    <script src="viewboard.js"></script>
+    <script src="webgl-utils.js"></script>
+    <script src="viewboard_webgl.js"></script>
     <script src="index.js"></script>
     <script>init()</script>
   </body>

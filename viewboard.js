@@ -1,4 +1,4 @@
-const ZOOM_FACTOR = 0.1;
+// const ZOOM_FACTOR = 0.2;
 
 class ViewBoard {
     constructor(canvas, ratio = 1) {
@@ -64,6 +64,7 @@ class ViewBoard {
         ctx.textBaseline = 'middle';
         for (let s of Object.values(vm.fixes)) {
             ctx.fillText(s.name, ...this.proj2xy(s));
+            // this.drawText(ctx, 'fixes', s.name, ...this.proj2xy(s));
         }
         ctx.restore();
     }
@@ -156,7 +157,7 @@ class ViewBoard {
             for (let s of region) {
                 ctx.lineTo(...this.proj2xy(s));
             }
-            // ctx.closePath();
+            ctx.closePath();
             ctx.stroke();
         }
         ctx.restore();
