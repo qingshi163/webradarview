@@ -10,6 +10,7 @@ const SETTING = {
     STYLE: 5,
 }
 
+window.onload = init;
 function init() {
     g_settings = {
         parent: null
@@ -31,7 +32,7 @@ function initCanvas() {
     const layer1 = document.getElementById('layer1');
     const layer2 = document.getElementById('layer2');
     const ratio = window.devicePixelRatio || 1;
-    vb = new ViewBoardWebGL(layer1, layer2, vb, g_settings, ratio);
+    vb = new ViewBoardWebGL(layer1, layer2,  g_settings, ratio);
 
     function resizeCanvas() {
         layer1.width = window.innerWidth * ratio;
@@ -120,9 +121,32 @@ function setup_vm(_vm) {
     Object.values(vm.geo).forEach(geo => {transColor(geo, geo[0]);geo.forEach(x => proj2(x))});
     Object.values(vm.regions).forEach(region => {transColor(region);region.forEach(x => proj(x))});
     Object.values(vm.labels).forEach(x => proj(x));
-    // vm.vor.CENTER00 = { name: 'CENTER00', freq: 0.0, lat: 0, lon: 0, projX: 0, projY: 0 };
+    vm.vor.CENTER00 = { name: 'CENTER00', freq: 0.0, lat: 0, lon: 0, projX: 0, projY: 0 };
+    vm.highAirway.push({
+        name: 'LEFT-RIGHT',
+        lat1: 0,
+        lon1: 0,
+        lat2: 0,
+        lon2: 0,
+        projX1: 0,
+        projY1: 0,
+        projX2: 100000,
+        projY2: 0,
+    });
+    vm.highAirway.push({
+        name: 'RIGHT-LEFT',
+        lat1: 0,
+        lon1: 0,
+        lat2: 0,
+        lon2: 0,
+        projX1: 100000,
+        projY1: 10000,
+        projX2: 0,
+        projY2: 10000,
+    });
 
-    vb.model = vm;
+    // vb.model = vm;
+    vb.setupModel(vm);
     vb.draw();
 }
 

@@ -4,36 +4,39 @@ const ZOOM_IN_TRANSLATE_FACTOR = ZOOM_FACTOR / (1 - ZOOM_FACTOR) + 1;
 const ZOOM_OUT_TRANSLATE_FACTOR = -ZOOM_FACTOR / (1 + ZOOM_FACTOR) + 1;
 
 const ARTCC_COLOR = [0.5, 0.5, 0.5, 1];
-const AIRWAY_COLOR= [0.3, 0.3, 0.3, 1];
-const RUNWAY_COLOR= [0.0, 0.0, 0.0, 1];
-const VOR_COLOR= [0.0, 0.0, 0.0, 1];
+const AIRWAY_COLOR = [0.3, 0.3, 0.3, 1];
+const RUNWAY_COLOR = [0.0, 0.0, 0.0, 1];
+const VOR_COLOR = [0.0, 0.0, 0.0, 1];
 
 class ViewBoardWebGL {
-    constructor(layer1, layer2, model, settings, ratio = 1) {
-        this.layer1 = layer1;
-        this.layer2 = layer2;
-        this.model = model;
+    constructor(glCanvas, ctxCanvas, settings = null, ratio = 1) {
+        this.glCanvas = glCanvas;
+        this.ctxCanvas = ctxCanvas;
         settings.viewboard = this.settings = {
             parent: settings
         };
-        this.settings['fixes'] = {
-            // font: { default: '9px serif', type: SETTING.FONT },
-            // textAlign: { default: 'center', type: SETTING.TEXT_ALIGN },
-            font: '9px serif',
-            textAlign: 'center',
-            textBaseline: 'middle',
-            strokeStyle: '#000000',
-        };
-        this.settings['vor'] = {
-            font: '13px serif',
-            textAlign: 'center',
-            textBaseline: 'bottom',
-            strokeStyle: '#000000',
-        }
+        this.initSettings();
         // this.updateViewport({ x: 0.0, y: 0.0 }, 1.0, ratio);
         this.updateViewport({ x: 3000.0, y: -1130.0 }, 4000.0, ratio);
 
-        this.initWebGL().then((gl) => this.gl = gl);
+        this.initWebGL();
+    }
+    setupModel(model) {
+        this.model = model;
+        if (!model) {
+            this.buffers = undefined;
+            return;
+        }
+        this.buffers = {};
+        let gl = twgl.getContext(this.glCanvas);
+        this.setupArtcc(gl, 'artcc');
+        this.setupArtcc(gl, 'artccHigh');
+        this.setupArtcc(gl, 'artccLow');
+        this.setupAirway(gl, 'highAirway');
+        this.setupAirway(gl, 'lowAirway');
+        this.setupRegions(gl);
+        this.setupGeo(gl);
+        this.setupRunway(gl);
     }
     loadTextSetting(id, ctx) {
         let setting = this.settings[id];
@@ -122,56 +125,107 @@ class ViewBoardWebGL {
         ctx.restore();
     }
 
+    setupRunway(gl) {
+        this.buffers.runway = twgl.createBufferInfoFromArrays(gl, {
+            a_position: {
+                numComponents: 2,
+                data: new Float32Array(
+                    this.model.runway.map(s => [s.projX1, s.projY1, s.projX2, s.projY2]).flat()
+                )
+            }
+        });
+    }
     drawRunway(gl) {
-        let a = this.model.runway.map(s => [s.projX1, s.projY1, s.projX2, s.projY2]).flat();
-        this.useLineProgram(gl, a, gl.LINES, RUNWAY_COLOR);
+        this.useLineProgram(gl, this.buffers.runway, gl.LINES, RUNWAY_COLOR);
     }
 
-    drawAirway(gl, ctx, airway) {
-        let a = airway.map(s => [s.projX1, s.projY1, s.projX2, s.projY2]).flat();
-        this.useLineProgram(gl, a, gl.LINES, AIRWAY_COLOR);
-        for (let s of airway) {
+    setupAirway(gl, name) {
+        this.buffers[name] = twgl.createBufferInfoFromArrays(gl, {
+            a_position: {
+                numComponents: 2,
+                data: new Float32Array(
+                    this.model[name].map(s => [s.projX1, s.projY1, s.projX2, s.projY2]).flat()
+                )
+            }
+        });
+    }
+    drawAirway(gl, ctx, name) {
+        this.useLineProgram(gl, this.buffers[name], gl.LINES, AIRWAY_COLOR);
+        ctx.save();
+        this.loadTextSetting(name, ctx);
+        for (let s of this.model[name]) {
             let [x1, y1, x2, y2] = this.proj2xy2(s);
-            let angle = Math.atan2(y2 - y1, x2 - x1);
+            let angle = x1 < x2 ? Math.atan2(y2 - y1, x2 - x1) : Math.atan2(y1 - y2, x1 - x2);
             ctx.save();
             ctx.translate(x1 + (x2 - x1) / 2, y1 + (y2 - y1) / 2);
             ctx.rotate(angle);
             ctx.fillText(s.name, 0, 0);
             ctx.restore();
         }
+        ctx.restore();
     }
 
-    drawArtcc(gl, artcc) {
-        let a = artcc.map(s => [s.projX1, s.projY1, s.projX2, s.projY2]).flat();
-        this.useLineProgram(gl, a, gl.LINES, ARTCC_COLOR);
+    setupArtcc(gl, name) {
+        this.buffers[name] = twgl.createBufferInfoFromArrays(gl, {
+            a_position: {
+                numComponents: 2,
+                data: new Float32Array(
+                    this.model[name].map(s => [s.projX1, s.projY1, s.projX2, s.projY2]).flat()
+                )
+            }
+        });
     }
-    
+    drawArtcc(gl, name) {
+        this.useLineProgram(gl, this.buffers[name], gl.LINES, ARTCC_COLOR);
+    }
+
+    setupGeo(gl) {
+        this.buffers.geo = {};
+        for (let [name, geo] of Object.entries(this.model.geo)) {
+            this.buffers.geo[name] = (twgl.createBufferInfoFromArrays(gl, {
+                a_position: {
+                    numComponents: 2,
+                    data: new Float32Array(
+                        geo.map(s => [s.projX1, s.projY1, s.projX2, s.projY2]).flat()
+                    )
+                }
+            }));
+        }
+    }
     drawGeo(gl) {
-        for (let geo of Object.values(this.model.geo)) {
-            let a = geo.map(s => [s.projX1, s.projY1, s.projX2, s.projY2]).flat();
-            this.useLineProgram(gl, a, gl.LINES, geo.rgba);
+        for (let [name, buffer] of Object.entries(this.buffers.geo)) {
+            this.useLineProgram(gl, buffer, gl.LINES, this.model.geo[name].rgba);
         }
     }
 
+    setupRegions(gl) {
+        this.buffers.regions = this.model.regions.map(region => {
+            return twgl.createBufferInfoFromArrays(gl, {
+                a_position: {
+                    numComponents: 2,
+                    data: new Float32Array(
+                        region.map(s => [s.projX, s.projY]).flat()
+                    )
+                }
+            });
+        });
+    }
     drawRegions(gl) {
-        for (let region of this.model.regions) {
-            let a = region.map(s => [s.projX, s.projY]).flat();
-            this.useLineProgram(gl, a, gl.LINE_LOOP, region.rgba);
+        for (let [index, buffer] of this.buffers.regions.entries()) {
+            this.useLineProgram(gl, buffer, gl.LINE_LOOP, this.model.regions[index].rgba);
         }
     }
 
-    useLineProgram(gl, a, mode, color) {
-        gl.useProgram(this.line.program);
-        gl.enableVertexAttribArray(this.line.a_position);
-        gl.bindBuffer(gl.ARRAY_BUFFER, this.line.positionBuffer);
-        gl.bufferData(gl.ARRAY_BUFFER, new Float32Array(a), gl.STREAM_DRAW);
-        gl.vertexAttribPointer(this.line.a_position, 2, gl.FLOAT, false, 0, 0);
-        gl.uniform2f(this.line.u_resolution, this.width, this.height);
-        // gl.uniform2f(this.line.u_resolution, gl.canvas.width, gl.canvas.height);
-        gl.uniform2f(this.line.u_translation, -this.centerX + this.width / 2, -this.centerY + this.height / 2);
-        gl.uniform1f(this.line.u_scale, this.scale);
-        gl.uniform4f(this.line.u_color, ...color);
-        gl.drawArrays(mode, 0, a.length / 2);
+    useLineProgram(gl, buffer, type, color) {
+        gl.useProgram(this.lineProgramInfo.program);
+        twgl.setBuffersAndAttributes(gl, this.lineProgramInfo, buffer);
+        twgl.setUniforms(this.lineProgramInfo, {
+            u_resolution: [this.width, this.height],
+            u_translation: [-this.centerX + this.width / 2, -this.centerY + this.height / 2],
+            u_scale: this.scale,
+            u_color: color,
+        });
+        twgl.drawBufferInfo(gl, buffer, type);
     }
 
     drawMap(gl, ctx) {
@@ -179,11 +233,11 @@ class ViewBoardWebGL {
         ctx.translate(-this.centerX + this.width / 2, -this.centerY + this.height / 2);
         this.drawGeo(gl);
         this.drawRegions(gl);
-        this.drawArtcc(gl, this.model.artcc);
-        this.drawArtcc(gl, this.model.artccHigh);
-        this.drawArtcc(gl, this.model.artccLow);
-        this.drawAirway(gl, ctx, this.model.highAirway);
-        this.drawAirway(gl, ctx, this.model.lowAirway);
+        this.drawArtcc(gl, 'artcc');
+        this.drawArtcc(gl, 'artccHigh');
+        this.drawArtcc(gl, 'artccLow');
+        this.drawAirway(gl, ctx, 'highAirway');
+        this.drawAirway(gl, ctx, 'lowAirway');
         this.drawRunway(gl);
         this.drawVor(ctx);
         this.drawNdb(ctx);
@@ -194,11 +248,7 @@ class ViewBoardWebGL {
     }
 
     draw() {
-        let gl = this.gl;
-        if (!gl) {
-            console.log('Context webgl not ready.');
-            return;
-        }
+        let gl = twgl.getContext(this.glCanvas);
         gl.viewport(0, 0, gl.canvas.width, gl.canvas.height);
         gl.clear(gl.COLOR_BUFFER_BIT);
         let ctx = layer2.getContext('2d');
@@ -206,8 +256,12 @@ class ViewBoardWebGL {
         ctx.scale(this.ratio, this.ratio);
         ctx.clearRect(0, 0, this.width, this.height);
         ctx.strokeRect(0, 0, this.width, this.height);
-        if (this.model)
+        //
+        ctx.fillText('AAABBBCCC', 200, 200);
+        //
+        if (this.model) {
             this.drawMap(gl, ctx);
+        }
         ctx.restore();
     }
     zoomIn() {
@@ -233,60 +287,46 @@ class ViewBoardWebGL {
         if (ratio) {
             this.ratio = ratio;
         }
-        this.width = this.layer1.width / this.ratio;
-        this.height = this.layer1.height / this.ratio;
+        this.width = this.glCanvas.width / this.ratio;
+        this.height = this.glCanvas.height / this.ratio;
 
         console.log(`viewport: x=${this.centerX}, y=${this.centerY}, scale=${this.scale}`);
     }
-    async initWebGL() {
-        function createShader(gl, type, source) {
-            let shader = gl.createShader(type);
-            gl.shaderSource(shader, source);
-            gl.compileShader(shader);
-            let success = gl.getShaderParameter(shader, gl.COMPILE_STATUS);
-            if (success) {
-                return shader;
-            }
-            console.log(gl.getShaderInfoLog(shader));
-            gl.deleteShader(shader);
-        }
-        function createProgram(gl, vertexShader, fragmentShader) {
-            let program = gl.createProgram();
-            gl.attachShader(program, vertexShader);
-            gl.attachShader(program, fragmentShader);
-            gl.linkProgram(program);
-            let success = gl.getProgramParameter(program, gl.LINK_STATUS);
-            if (success) {
-                return program;
-            }
-            console.log(gl.getProgramInfoLog(program));
-            gl.deleteProgram(program);
-        }
-
-        let gl = this.layer1.getContext('webgl');
+    initWebGL() {
+        let gl = twgl.getContext(this.glCanvas);
         if (!gl) {
             console.log('Fail to create webgl context.');
             return;
         }
-
-        let lineVertSource = await (await fetch('line.vert')).text();
-        let lineFragSource = await (await fetch('line.frag')).text();
-        
-        let lineVert = createShader(gl, gl.VERTEX_SHADER, lineVertSource);
-        let lineFrag = createShader(gl, gl.FRAGMENT_SHADER, lineFragSource);
-
-        this.line = (function(program) { return {
-            program: program,
-            a_position: gl.getAttribLocation(program, 'a_position'),
-            u_resolution: gl.getUniformLocation(program, 'u_resolution'),
-            u_translation: gl.getUniformLocation(program, 'u_translation'),
-            u_scale: gl.getUniformLocation(program, 'u_scale'),
-            u_color: gl.getUniformLocation(program, 'u_color'),
-            positionBuffer: gl.createBuffer(),
-        }})(createProgram(gl, lineVert, lineFrag));
-
+        this.lineProgramInfo = twgl.createProgramInfo(gl, ['line-vert-source', 'line-frag-source']);
         gl.depthMask(false);
-
-        return gl;
+    }
+    initSettings() {
+        this.settings['fixes'] = {
+            // font: { default: '9px serif', type: SETTING.FONT },
+            // textAlign: { default: 'center', type: SETTING.TEXT_ALIGN },
+            font: '9px serif',
+            textAlign: 'center',
+            textBaseline: 'middle',
+            strokeStyle: '#000000',
+        };
+        this.settings['vor'] = {
+            font: '13px serif',
+            textAlign: 'center',
+            textBaseline: 'bottom',
+            strokeStyle: '#000000',
+        }
+        this.settings['highAirway'] = {
+            font: '11px serif',
+            textAlign: 'center',
+            textBaseline: 'bottom',
+            strokeStyle: '#000000',
+        }
+        this.settings['lowAirway'] = {
+            font: '11px serif',
+            textAlign: 'center',
+            textBaseline: 'bottom',
+            strokeStyle: '#000000',
+        }
     }
 }
