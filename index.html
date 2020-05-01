@@ -2,16 +2,50 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>WebRadar v0.001</title>
+    <title>WebRadar v0.01</title>
+    <link rel="stylesheet" href="node_modules/@fortawesome/fontawesome-free/css/all.css">
     <link rel="stylesheet" href="index.css">
   </head>
   <body>
     <canvas id="layer1">Your Browser Not Support Canvas.</canvas>
     <canvas id="layer2"></canvas>
-    <div id="top-panel" class="panel">
-      <input id="load-file" type="file" accept=".sct">
-      <button>View</button>
+    <div id="app">
+      <div id="top-panel" class="panel">
+        <input id="load-file" type="file" accept=".sct">
+      </div>
+      <div id="settings-card" class="card">
+        <div class="top">
+          <span>TOP BAR</span>
+          <i class="card-fn-hide far fa-window-close fa-lg" style="float: right"></i>
+        </div>
+        <div class="content card-fn-hide">
+          <span>CONTENT</span>
+        </div>
+      </div>
     </div>
+    <script>
+      for (card of document.querySelectorAll('.card')) {
+        for (dom of card.querySelectorAll('.card-fn-hide')) {
+          dom.addEventListener('click', function() {
+            card.style.display = 'none'
+          });
+        }
+        let top = card.querySelector('.top');
+        if (top) {
+          top.addEventListener('mousedown', function() {
+            top.draging = true;
+          });
+          top.addEventListener('mouseup', function() {
+            top.draging = false;
+          });
+          top.addEventListener('mousemove', function(event) {
+            if (top.draging) {
+              //
+            }
+          })
+        }
+      }
+    </script>
 <script id="line-frag-source" type="glsl">
   precision mediump float;
   uniform vec4 u_color;
@@ -38,6 +72,9 @@
     <script src="sectorparser.js"></script>
     <!-- <script src="webgl-utils.js"></script> -->
     <script src="node_modules/twgl.js/dist/4.x/twgl.js"></script>
+    <!-- <script src="node_modules/vue/dist/vue.esm.browser.js"></script> -->
+    <!-- <script src="node_modules/vue/dist/vue.js"></script> -->
+    <!-- <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script> -->
     <script src="viewboard_webgl.js"></script>
     <script src="index.js"></script>
   </body>

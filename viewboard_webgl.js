@@ -62,7 +62,7 @@ class ViewBoardWebGL {
     drawFixes(ctx) {
         ctx.save();
         this.loadTextSetting('fixes', ctx);
-        for (let s of Object.values(vm.fixes)) {
+        for (let s of Object.values(this.model.fixes)) {
             ctx.fillText(s.name, ...this.proj2xy(s));
         }
         ctx.restore();
@@ -71,7 +71,7 @@ class ViewBoardWebGL {
         ctx.save();
         this.loadTextSetting('vor', ctx);
         let vorPath = new Path2D('M-8 -8 h16 v16 h-16 Z M-4 -8 h8 l4 8 l-4 8 h-8 l-4 -8 Z');
-        for (let s of Object.values(vm.vor)) {
+        for (let s of Object.values(this.model.vor)) {
             ctx.save();
             ctx.translate(...this.proj2xy(s));
             ctx.fillText(s.name, 0, -10);
@@ -88,7 +88,7 @@ class ViewBoardWebGL {
         ctx.font = '12px serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'bottom';
-        for (let s of Object.values(vm.ndb)) {
+        for (let s of Object.values(this.model.ndb)) {
             let [x, y] = this.proj2xy(s);
             ctx.fillText(s.name, x, y - 10);
             ctx.beginPath();
@@ -108,7 +108,7 @@ class ViewBoardWebGL {
         ctx.font = '8px serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        for (let s of vm.labels) {
+        for (let s of this.model.labels) {
             ctx.fillStyle = s.color;
             ctx.fillText(s.name, ...this.proj2xy(s));
         }
@@ -119,7 +119,7 @@ class ViewBoardWebGL {
         ctx.font = '9px serif';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        for (let s of Object.values(vm.airport)) {
+        for (let s of Object.values(this.model.airport)) {
             ctx.fillText(s.name, ...this.proj2xy(s));
         }
         ctx.restore();
@@ -256,9 +256,6 @@ class ViewBoardWebGL {
         ctx.scale(this.ratio, this.ratio);
         ctx.clearRect(0, 0, this.width, this.height);
         ctx.strokeRect(0, 0, this.width, this.height);
-        //
-        ctx.fillText('AAABBBCCC', 200, 200);
-        //
         if (this.model) {
             this.drawMap(gl, ctx);
         }

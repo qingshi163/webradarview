@@ -10,8 +10,7 @@ const SETTING = {
     STYLE: 5,
 }
 
-window.onload = init;
-function init() {
+window.onload = function() {
     g_settings = {
         parent: null
     };
@@ -19,6 +18,13 @@ function init() {
     initCanvas();
 
     document.getElementById('load-file').addEventListener('change', on_load_file);
+
+    // let app = new Vue({
+    //     el: '#app',
+    //     data: {
+    //         message: 'Hello Vue!!'
+    //     }
+    // });
 
     // fetch('res/ZBPE FIR VATPRC/Data/Sectors/ZBPE.sct').then((res) => {
     //     return res.text();
@@ -51,17 +57,17 @@ function initCanvas() {
 
     let dragX, dragY, originX, originY;
     let draging = false;
-    layer2.addEventListener('mousedown', (event) => {
+    layer2.addEventListener('mousedown', function() {
         dragX = 0.0;
         dragY = 0.0;
         originX = vb.centerX;
         originY = vb.centerY;
         draging = true;
     });
-    layer2.addEventListener('mouseup', (event) => {
+    layer2.addEventListener('mouseup', function() {
         draging = false;
     });
-    layer2.addEventListener('mousemove', (event) => {
+    layer2.addEventListener('mousemove', function(event) {
         if (draging) {
             dragX -= event.movementX;
             dragY -= event.movementY;
@@ -70,7 +76,7 @@ function initCanvas() {
             vb.draw();
         }
     });
-    layer2.addEventListener('wheel', (event) => {
+    layer2.addEventListener('wheel', function(event) {
         if (event.deltaY < 0) {
             vb.zoomIn();
         } else {
@@ -78,7 +84,7 @@ function initCanvas() {
         }
         vb.draw();
     });
-    layer2.addEventListener('contextmenu', (event) => {
+    layer2.addEventListener('contextmenu', function(event) {
         event.preventDefault();
         return false;
     });
