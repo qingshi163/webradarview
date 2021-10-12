@@ -5,7 +5,7 @@
   "main": "main.js",
   "dependencies": {
     "@fortawesome/fontawesome-free": "^5.13.0",
-    "electron": "^8.5.1",
+    "electron": "^11.5.0",
     "proj4": "^2.6.1",
     "twgl.js": "^4.15.0",
     "vue": "^2.6.11"
